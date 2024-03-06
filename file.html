@@ -6,9 +6,16 @@
 <title>Bluetooth Thermometer Reader</title>
 </head>
 <body>
-    <button onclick="connectToDevice()">Connect to Device</button>
+     <button onclick="connectToDevice()">Connect to Device</button>
     <button onclick="readTemperature()" disabled>Read Temperature</button>
     <div id="temperatureDisplay">Temperature will be displayed here</div>
+
+    <!-- Add camera functionality HTML here -->
+    <button onclick="startCamera()">Start Camera</button>
+    <video id="video" width="320" height="240" autoplay style="display:none;"></video>
+    <button id="capture" onclick="takePicture()" disabled>Capture Photo</button>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <img id="photo" style="display:none;">
 <script>
 let globalDevice;
 
@@ -42,11 +49,57 @@ async function readTemperature() {
         const temperature = value.getFloat32(0, true); // Assuming little-endian format
 
         document.getElementById('temperatureDisplay').textContent = `Temperature: ${temperature.toFixed(2)}°C`;
+        
+        // Send the temperature to Power Automate
+        sendTemperatureToPowerAutomate(temperature.toFixed(2));
     } catch (error) {
         console.error('Error:', error);
         document.getElementById('temperatureDisplay').textContent = 'Error reading temperature.';
     }
 }
+
+async function sendTemperatureToPowerAutomate(temperature) {
+    const url = "https://prod-48.southeastasia.logic.azure.com:443/workflows/c65d69778be645c097bfefd8db2a0232/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=7ZWVMahq1Eo10wYtAbHbF0nm1JpNAgiYUR_K8X2TL0U";
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ temperature: temperature })
+        });
+        console.log('Temperature sent to Power Automate successfully.');
+    } catch (error) {
+        console.error('Error sending temperature to Power Automate:', error);
+    }
+}
+ // Add the JavaScript code for camera functionality here
+    let videoStream;
+
+    async function startCamera() {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.querySelector('#video').srcObject = videoStream;
+            document.querySelector('#video').style.display = 'block';
+            document.querySelector('#capture').disabled = false;
+        } catch (error) {
+            console.error('Error accessing the camera:', error);
+        }
+    }
+
+    function takePicture() {
+        const video = document.querySelector('#video');
+        const canvas = document.querySelector('#canvas');
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataUrl = canvas.toDataURL('image/png');
+
+        videoStream.getTracks().forEach(track => track.stop());
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        document.querySelector('#photo').src = imageDataUrl;
+        document.querySelector('#photo').style.display = 'block';
+    }
 </script>
 </body>
 </html>
