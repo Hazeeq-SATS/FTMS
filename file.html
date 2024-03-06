@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bluetooth Thermometer Reader</title>
+</head>
+<body>
+    <button onclick="connectToDevice()">Connect to Device</button>
+    <button onclick="readTemperature()" disabled>Read Temperature</button>
+    <div id="temperatureDisplay">Temperature will be displayed here</div>
+<script>
+let globalDevice;
+
+async function connectToDevice() {
+    try {
+        const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: ['45544942-4c55-4554-4845-524db87ad700'] // The primary service UUID
+        });
+        console.log('Device selected:', device.name);
+        globalDevice = device;
+        
+        // Enable the 'Read Temperature' button after successfully connecting to a device
+        document.querySelector("button[onclick='readTemperature()']").disabled = false;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function readTemperature() {
+    if (!globalDevice) {
+        console.log('No device connected');
+        return;
+    }
+
+    try {
+        const server = await globalDevice.gatt.connect();
+        const service = await server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
+        const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
+        const value = await characteristic.readValue();
+        const temperature = value.getFloat32(0, true); // Assuming little-endian format
+
+        document.getElementById('temperatureDisplay').textContent = `Temperature: ${temperature.toFixed(2)}°C`;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('temperatureDisplay').textContent = 'Error reading temperature.';
+    }
+}
+</script>
+</body>
+</html>
