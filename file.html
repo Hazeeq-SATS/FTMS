@@ -2,17 +2,26 @@
 <html>
 <head>
     <title>Bluetooth Device Connection Example</title>
+    <style>
+        /* Initially hide the video element */
+        #cameraPreview {
+            display: none;
+            width: 320px;
+            height: 240px;
+        }
+    </style>
 </head>
 <body>
     <button id="connectButton">Connect to Bluetooth Device</button>
     <button id="captureButton">Capture Temperature and Photo</button>
     <div id="deviceInfo"></div>
     <div id="temperatureValue"></div>
-    <video id="cameraPreview" width="320" height="240" autoplay></video>
+    <video id="cameraPreview" autoplay></video>
     <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
 
     <script>
         let globalCharacteristic;
+        let stream = null; // To hold the stream globally
 
         document.getElementById('connectButton').addEventListener('click', function() {
             navigator.bluetooth.requestDevice({
@@ -33,6 +42,15 @@
             .then(characteristic => {
                 globalCharacteristic = characteristic; // Save for later use
                 console.log('Ready to receive temperature notifications');
+                // Start the video stream and show the video element when Bluetooth is connected
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(mediaStream => {
+                        stream = mediaStream;
+                        const video = document.getElementById('cameraPreview');
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                    })
+                    .catch(error => console.error('Error accessing the camera', error));
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -45,17 +63,10 @@
                 globalCharacteristic.readValue().then(value => {
                     const temperature = value.getFloat32(0, true);
                     document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
+                    capturePhoto();
                 });
             }
-            capturePhoto();
         });
-
-        // Start the video stream for camera preview
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => {
-                document.getElementById('cameraPreview').srcObject = stream;
-            })
-            .catch(error => console.error('Error accessing the camera', error));
 
         function capturePhoto() {
             const video = document.getElementById('cameraPreview');
@@ -68,6 +79,13 @@
             const img = document.getElementById('capturedPhoto');
             img.src = canvas.toDataURL('image/png');
             img.style.display = 'block';
+
+            // Hide the video element and stop the video stream
+            video.style.display = 'none';
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
         }
     </script>
 </body>
