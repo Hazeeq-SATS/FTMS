@@ -1,105 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bluetooth Thermometer Reader</title>
+    <title>Bluetooth Device Connection Example</title>
 </head>
 <body>
-     <button onclick="connectToDevice()">Connect to Device</button>
-    <button onclick="readTemperature()" disabled>Read Temperature</button>
-    <div id="temperatureDisplay">Temperature will be displayed here</div>
+    <button id="connectButton">Connect to Bluetooth Device</button>
+    <div id="deviceInfo"></div>
+    <div id="temperatureValue"></div>
 
-    <!-- Add camera functionality HTML here -->
-    <button onclick="startCamera()">Start Camera</button>
-    <video id="video" width="320" height="240" autoplay style="display:none;"></video>
-    <button id="capture" onclick="takePicture()" disabled>Capture Photo</button>
-    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <img id="photo" style="display:none;">
-<script>
-let globalDevice;
-
-async function connectToDevice() {
-    try {
-        const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: ['45544942-4c55-4554-4845-524db87ad700'] // The primary service UUID
+    <script>
+        document.getElementById('connectButton').addEventListener('click', function() {
+            navigator.bluetooth.requestDevice({
+                filters: [{ name: '21057150 RayTemp Blue' }],
+                optionalServices: ['45544942-4c55-4554-4845-524db87ad700']
+            })
+            .then(device => {
+                console.log('Device selected:', device.name);
+                document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
+                return device.gatt.connect();
+            })
+            .then(server => {
+                return server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
+            })
+            .then(service => {
+                return service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
+            })
+            .then(characteristic => {
+                // Subscribe to notifications
+                characteristic.startNotifications().then(() => {
+                    console.log('Subscribed to temperature notifications');
+                    characteristic.addEventListener('characteristicvaluechanged', event => {
+                        const value = event.target.value;
+                        // Assuming the temperature data is a 32-bit float
+                        // Adjust this based on your characteristic's actual data format
+                        const temperature = value.getFloat32(0, true);
+                        document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('deviceInfo').innerText = `Connection error: ${error}`;
+            });
         });
-        console.log('Device selected:', device.name);
-        globalDevice = device;
-        
-        // Enable the 'Read Temperature' button after successfully connecting to a device
-        document.querySelector("button[onclick='readTemperature()']").disabled = false;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-async function readTemperature() {
-    if (!globalDevice) {
-        console.log('No device connected');
-        return;
-    }
-
-    try {
-        const server = await globalDevice.gatt.connect();
-        const service = await server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
-        const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
-        const value = await characteristic.readValue();
-        const temperature = value.getFloat32(0, true); // Assuming little-endian format
-
-        document.getElementById('temperatureDisplay').textContent = `Temperature: ${temperature.toFixed(2)}°C`;
-        
-        // Send the temperature to Power Automate
-        sendTemperatureToPowerAutomate(temperature.toFixed(2));
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('temperatureDisplay').textContent = 'Error reading temperature.';
-    }
-}
-
-async function sendTemperatureToPowerAutomate(temperature) {
-    const url = "https://prod-48.southeastasia.logic.azure.com:443/workflows/c65d69778be645c097bfefd8db2a0232/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=7ZWVMahq1Eo10wYtAbHbF0nm1JpNAgiYUR_K8X2TL0U";
-    try {
-        await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ temperature: temperature })
-        });
-        console.log('Temperature sent to Power Automate successfully.');
-    } catch (error) {
-        console.error('Error sending temperature to Power Automate:', error);
-    }
-}
- // Add the JavaScript code for camera functionality here
-    let videoStream;
-
-    async function startCamera() {
-        try {
-            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.querySelector('#video').srcObject = videoStream;
-            document.querySelector('#video').style.display = 'block';
-            document.querySelector('#capture').disabled = false;
-        } catch (error) {
-            console.error('Error accessing the camera:', error);
-        }
-    }
-
-    function takePicture() {
-        const video = document.querySelector('#video');
-        const canvas = document.querySelector('#canvas');
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageDataUrl = canvas.toDataURL('image/png');
-
-        videoStream.getTracks().forEach(track => track.stop());
-        video.style.display = 'none';
-        canvas.style.display = 'block';
-        
-        document.querySelector('#photo').src = imageDataUrl;
-        document.querySelector('#photo').style.display = 'block';
-    }
-</script>
+    </script>
 </body>
 </html>
