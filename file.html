@@ -19,7 +19,7 @@
     <button id="readNfcButton">Read NFC</button>
     
     <div id="temperatureValue"></div>
-    <div id="nfcId"></div>
+    <div id="nfcInfo"></div> <!-- Element to display NFC tag info -->
     <div id="temperatureValue"></div>
     <video id="cameraPreview" autoplay></video>
     <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
@@ -93,30 +93,36 @@
             }
         }
 
-        ddocument.getElementById('readNfcButton').addEventListener('click', async function() {
-    if ('NDEFReader' in window) {
-        try {
-            const ndef = new NDEFReader();
-            await ndef.scan();
-            console.log("NFC scanning started successfully.");
-            ndef.onreading = event => {
-                console.log("NFC tag detected.");
-                event.message.records.forEach(record => {
-                    console.log(`Record type: ${record.recordType}`);
-                    // Process the record data (assuming text for simplicity)
-                    if (record.recordType === "text") {
-                        const textDecoder = new TextDecoder(record.encoding);
-                        console.log(`Text: ${textDecoder.decode(record.data)}`);
-                    }
-                });
-            };
-        } catch (error) {
-            console.error(`Error: ${error}`);
-        }
-    } else {
-        alert("Web NFC is not supported on this device or browser.");
-    }
-});
+  document.getElementById('readNfcButton').addEventListener('click', async function() {
+            if ('NDEFReader' in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    document.getElementById('nfcInfo').innerText = "Scanning for NFC tag...";
+                    ndef.onreading = event => {
+                        let nfcContent = "NFC Tag Detected:\n";
+                        event.message.records.forEach((record, index) => {
+                            const recordType = record.recordType;
+                            const mediaType = record.mediaType || 'N/A';
+                            let recordInfo = `Record ${index + 1}: Type - ${recordType}, Media Type - ${mediaType}`;
+                            if (recordType === 'text') {
+                                const decoder = new TextDecoder(record.encoding);
+                                const textContent = decoder.decode(record.data);
+                                recordInfo += `, Content - ${textContent}`;
+                            }
+                            nfcContent += recordInfo + '\n';
+                        });
+                        document.getElementById('nfcInfo').innerText = nfcContent;
+                    };
+                } catch (error) {
+                    console.error(`Error: ${error}`);
+                    document.getElementById('nfcInfo').innerText = `Error: ${error}`;
+                }
+            } else {
+                alert("Web NFC is not supported on this device or browser.");
+                document.getElementById('nfcInfo').innerText = "Web NFC is not supported on this device or browser.";
+            }
+        });
 
     </script>
 </body>
