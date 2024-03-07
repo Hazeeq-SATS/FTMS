@@ -15,6 +15,11 @@
     <button id="connectButton">Connect to Bluetooth Device</button>
     <button id="captureButton">Capture Temperature and Photo</button>
     <div id="deviceInfo"></div>
+
+    <button id="readNfcButton">Read NFC</button>
+    
+    <div id="temperatureValue"></div>
+    <div id="nfcId"></div>
     <div id="temperatureValue"></div>
     <video id="cameraPreview" autoplay></video>
     <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
@@ -87,6 +92,29 @@
                 tracks.forEach(track => track.stop());
             }
         }
+
+        document.getElementById('readNfcButton').addEventListener('click', async function() {
+            if ('NDEFReader' in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    console.log("NFC scanning started successfully.");
+                    ndef.onreading = event => {
+                        const decoder = new TextDecoder();
+                        for (const record of event.message.records) {
+                            console.log("Record type: " + record.recordType);
+                            console.log("MIME type: " + record.mediaType);
+                            console.log("Record id: " + record.id);
+                            document.getElementById('nfcId').innerText = `NFC ID: ${record.id}`;
+                        }
+                    };
+                } catch (error) {
+                    console.error(`Error: ${error}`);
+                }
+            } else {
+                alert("Web NFC is not supported on this device or browser.");
+            }
+        });
     </script>
 </body>
 </html>
