@@ -93,28 +93,31 @@
             }
         }
 
-        document.getElementById('readNfcButton').addEventListener('click', async function() {
-            if ('NDEFReader' in window) {
-                try {
-                    const ndef = new NDEFReader();
-                    await ndef.scan();
-                    console.log("NFC scanning started successfully.");
-                    ndef.onreading = event => {
-                        const decoder = new TextDecoder();
-                        for (const record of event.message.records) {
-                            console.log("Record type: " + record.recordType);
-                            console.log("MIME type: " + record.mediaType);
-                            console.log("Record id: " + record.id);
-                            document.getElementById('nfcId').innerText = `NFC ID: ${record.id}`;
-                        }
-                    };
-                } catch (error) {
-                    console.error(`Error: ${error}`);
-                }
-            } else {
-                alert("Web NFC is not supported on this device or browser.");
-            }
-        });
+        ddocument.getElementById('readNfcButton').addEventListener('click', async function() {
+    if ('NDEFReader' in window) {
+        try {
+            const ndef = new NDEFReader();
+            await ndef.scan();
+            console.log("NFC scanning started successfully.");
+            ndef.onreading = event => {
+                console.log("NFC tag detected.");
+                event.message.records.forEach(record => {
+                    console.log(`Record type: ${record.recordType}`);
+                    // Process the record data (assuming text for simplicity)
+                    if (record.recordType === "text") {
+                        const textDecoder = new TextDecoder(record.encoding);
+                        console.log(`Text: ${textDecoder.decode(record.data)}`);
+                    }
+                });
+            };
+        } catch (error) {
+            console.error(`Error: ${error}`);
+        }
+    } else {
+        alert("Web NFC is not supported on this device or browser.");
+    }
+});
+
     </script>
 </body>
 </html>
