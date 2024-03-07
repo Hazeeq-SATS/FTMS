@@ -5,10 +5,15 @@
 </head>
 <body>
     <button id="connectButton">Connect to Bluetooth Device</button>
+    <button id="captureButton">Capture Temperature and Photo</button>
     <div id="deviceInfo"></div>
     <div id="temperatureValue"></div>
+    <video id="cameraPreview" width="320" height="240" autoplay></video>
+    <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
 
     <script>
+        let globalCharacteristic;
+
         document.getElementById('connectButton').addEventListener('click', function() {
             navigator.bluetooth.requestDevice({
                 filters: [{ name: '21057150 RayTemp Blue' }],
@@ -26,23 +31,44 @@
                 return service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
             })
             .then(characteristic => {
-                // Subscribe to notifications
-                characteristic.startNotifications().then(() => {
-                    console.log('Subscribed to temperature notifications');
-                    characteristic.addEventListener('characteristicvaluechanged', event => {
-                        const value = event.target.value;
-                        // Assuming the temperature data is a 32-bit float
-                        // Adjust this based on your characteristic's actual data format
-                        const temperature = value.getFloat32(0, true);
-                        document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
-                    });
-                });
+                globalCharacteristic = characteristic; // Save for later use
+                console.log('Ready to receive temperature notifications');
             })
             .catch(error => {
                 console.error('Error:', error);
                 document.getElementById('deviceInfo').innerText = `Connection error: ${error}`;
             });
         });
+
+        document.getElementById('captureButton').addEventListener('click', function() {
+            if (globalCharacteristic) {
+                globalCharacteristic.readValue().then(value => {
+                    const temperature = value.getFloat32(0, true);
+                    document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
+                });
+            }
+            capturePhoto();
+        });
+
+        // Start the video stream for camera preview
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                document.getElementById('cameraPreview').srcObject = stream;
+            })
+            .catch(error => console.error('Error accessing the camera', error));
+
+        function capturePhoto() {
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to an image and display it
+            const img = document.getElementById('capturedPhoto');
+            img.src = canvas.toDataURL('image/png');
+            img.style.display = 'block';
+        }
     </script>
 </body>
 </html>
