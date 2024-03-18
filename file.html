@@ -1,4 +1,3 @@
-User
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,18 +12,25 @@ User
     </style>
 </head>
 <body>
-    <button id="connectButton">Connect to Bluetooth Device</button>
-    <button id="captureButton">Capture Temperature and Photo</button>
-    <div id="deviceInfo"></div>
+    <div id="bluetoothContainer">
+        <button id="connectButton">Connect to Bluetooth Device</button>
+        <div id="deviceInfo"></div>
+    </div>
 
-    <button id="scanButton">Scan NFC</button> <!-- NFC Scan Button -->
-    <div id="nfcContent"></div>
-    
-    <div id="temperatureValue"></div>
-   
-    <div id="temperatureValue"></div>
-    <video id="cameraPreview" autoplay></video>
-    <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
+    <div id="captureContainer">
+        <button id="captureButton">Capture Temperature and Photo</button>
+        <div id="temperatureValue"></div>
+    </div>
+
+    <div id="nfcContainer">
+        <button id="scanButton">Scan NFC</button> <!-- NFC Scan Button -->
+        <div id="nfcContent"></div>
+    </div>
+
+    <div id="cameraContainer">
+        <video id="cameraPreview" autoplay></video>
+        <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
+    </div>
 
     <script>
         let globalCharacteristic;
