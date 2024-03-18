@@ -106,29 +106,34 @@
                         
                         event.message.records.forEach((record, index) => {
                             let content = `Record ${index + 1}: `;
-                            switch(record.recordType) {
-                                case "text":
-                                    const textDecoder = new TextDecoder(record.encoding);
-                                    content += `Text: ${textDecoder.decode(record.data)}`;
-                                    break;
-                                case "url":
-                                    const urlDecoder = new TextDecoder();
-                                    content += `URL: ${urlDecoder.decode(record.data)}`;
-                                    break;
-                                case "mime":
-                                    content += `MIME (${record.mediaType}): `;
-                                    if (record.mediaType.startsWith('image/')) {
-                                        const blob = new Blob([record.data], { type: record.mediaType });
-                                        const url = URL.createObjectURL(blob);
-                                        content += `<img src="${url}" alt="NFC Image" style="max-width: 200px;">`;
-                                    } else {
-                                        // Handle other MIME types as needed
-                                        content += 'Unsupported MIME type for display.';
-                                    }
-                                    break;
-                                default:
-                                    content += 'Unsupported record type for display.';
-                            }
+                         switch(record.recordType) {
+    case "text":
+        const textDecoder = new TextDecoder(record.encoding);
+        content += `Text: ${textDecoder.decode(record.data)}`;
+        break;
+    case "url":
+        const urlDecoder = new TextDecoder();
+        content += `URL: ${urlDecoder.decode(record.data)}`;
+        break;
+    case "mime":
+        content += `MIME (${record.mediaType}): `;
+        if (record.mediaType.startsWith('image/')) {
+            const blob = new Blob([record.data], { type: record.mediaType });
+            const url = URL.createObjectURL(blob);
+            content += `<img src="${url}" alt="NFC Image" style="max-width: 200px;">`;
+        } else {
+            // For non-image MIME types, you could attempt to display them as text or provide a download link
+            content += 'Unsupported MIME type for display.';
+        }
+        break;
+    default:
+        // Attempt to display unknown record types as binary data in hexadecimal
+        // This is more of a diagnostic approach rather than a user-friendly one
+        const binaryData = new Uint8Array(record.data);
+        const hexString = Array.from(binaryData).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        content += `Unknown or unsupported record type. Data in hex: ${hexString}`;
+}
+
                             const para = document.createElement('p');
                             para.innerHTML = content;
                             contentsDiv.appendChild(para);
