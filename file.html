@@ -17,7 +17,7 @@ User
     <button id="captureButton">Capture Temperature and Photo</button>
     <div id="deviceInfo"></div>
 
- <button id="readNfcButton">Read NFC</button>
+    <button id="scanButton">Scan NFC</button> <!-- NFC Scan Button -->
     <div id="nfcContent"></div>
     
     <div id="temperatureValue"></div>
@@ -95,53 +95,28 @@ User
             }
         }
 
- document.getElementById('readNfcButton').addEventListener('click', async () => {
+ // NFC Scan Button Logic
+        document.getElementById('scanButton').addEventListener("click", async () => {
             if ('NDEFReader' in window) {
                 try {
                     const ndef = new NDEFReader();
                     await ndef.scan();
-                    document.getElementById('nfcContent').innerText = 'Scanning for NFC tag...';
-                    ndef.onreading = event => {
-                        document.getElementById('nfcContent').innerText = '';
-                        const contentsDiv = document.getElementById('nfcContent');
-                        
-                        event.message.records.forEach((record, index) => {
-                            let content = `Record ${index + 1}: `;
-                            switch(record.recordType) {
-                                case "text":
-                                    const textDecoder = new TextDecoder(record.encoding);
-                                    content += `Text: ${textDecoder.decode(record.data)}`;
-                                    break;
-                                case "url":
-                                    const urlDecoder = new TextDecoder();
-                                    content += `URL: ${urlDecoder.decode(record.data)}`;
-                                    break;
-                                case "mime":
-                                    content += `MIME (${record.mediaType}): `;
-                                    if (record.mediaType.startsWith('image/')) {
-                                        const blob = new Blob([record.data], { type: record.mediaType });
-                                        const url = URL.createObjectURL(blob);
-                                        content += `<img src="${url}" alt="NFC Image" style="max-width: 200px;">`;
-                                    } else {
-                                        // Handle other MIME types as needed
-                                        content += 'Unsupported MIME type for display.';
-                                    }
-                                    break;
-                                default:
-                                    content += 'Unsupported record type for display.';
-                            }
-                            const para = document.createElement('p');
-                            para.innerHTML = content;
-                            contentsDiv.appendChild(para);
-                        });
-                    };
+                    console.log("> Scan started");
+
+                    ndef.addEventListener("readingerror", () => {
+                        console.error("Argh! Cannot read data from the NFC tag. Try another one?");
+                    });
+
+                    ndef.addEventListener("reading", ({ message, serialNumber }) => {
+                        console.log(`> Serial Number: ${serialNumber}`);
+                        console.log(`> Records: (${message.records.length})`);
+                        // Display the NFC data or handle as needed
+                    });
                 } catch (error) {
-                    console.error(`Error: ${error}`);
-                    document.getElementById('nfcContent').innerText = `Error: ${error.message}`;
+                    console.error("Argh! " + error);
                 }
             } else {
-                console.log("Web NFC is not supported.");
-                document.getElementById('nfcContent').innerText = "Web NFC is not supported on this device or browser.";
+                console.error("Web NFC is not supported.");
             }
         });
 
