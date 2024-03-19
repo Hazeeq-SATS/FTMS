@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bluetooth Device Connection Example</title>
+    <title>Bluetooth Device Connection Example with QR Code Scanning</title>
     <style>
-        /* Initially hide the video element */
-        #cameraPreview {
+        /* Styles for video and captured photo elements */
+        #cameraPreview, #qrVideo {
+            display: none;
+            width: 320px;
+            height: 240px;
+        }
+        #capturedPhoto {
             display: none;
             width: 320px;
             height: 240px;
@@ -21,20 +26,21 @@
         <button id="captureButton">Capture Temperature and Photo</button>
         <div id="temperatureValue"></div>
     </div>
-     <!-- QR Code Scanning Section -->
-    <div id="qrContainer">
-        <button id="qrScanButton">Scan QR Code</button> <!-- QR Scan Button -->
-        <div id="qrResult">QR code result will appear here</div>
-    </div>
 
     <div id="nfcContainer">
-        <button id="scanButton">Scan NFC</button> <!-- NFC Scan Button -->
+        <button id="scanButton">Scan NFC</button>
         <div id="nfcContent"></div>
     </div>
 
     <div id="cameraContainer">
         <video id="cameraPreview" autoplay></video>
-        <img id="capturedPhoto" src="" alt="Captured photo" width="320" height="240" style="display:none;">
+        <img id="capturedPhoto" alt="Captured photo">
+    </div>
+
+    <!-- QR Code Scanning Section -->
+    <div id="qrContainer">
+        <button id="qrScanButton">Scan QR Code</button> <!-- QR Scan Button -->
+        <div id="qrResult">QR code result will appear here</div>
     </div>
 
     <script>
