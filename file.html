@@ -143,6 +143,46 @@
                 console.error("Web NFC is not supported.");
             }
         });
+        
+        // QR Code Scan Button Logic using the Barcode Detection API
+        document.getElementById('qrScanButton').addEventListener('click', async () => {
+            if ('BarcodeDetector' in window) {
+                try {
+                    const barcodeDetector = new BarcodeDetector({formats: ['qr_code']});
+                    const videoElement = document.getElementById('cameraPreview');
+                    videoElement.style.display = 'block'; // Show video element to start capturing video
+
+                    // Use the video stream for QR code detection
+                    if (!stream) {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                        videoElement.srcObject = stream;
+                    }
+
+                    // Continuously scan for QR codes
+                    const scanQRCode = async () => {
+                        try {
+                            const barcodes = await barcodeDetector.detect(videoElement);
+                            if (barcodes.length > 0) {
+                                document.getElementById('qrResult').textContent = `QR Code Content: ${barcodes[0].rawValue}`;
+                                // Stop the video stream as QR code is found
+                                stream.getTracks().forEach(track => track.stop());
+                                videoElement.style.display = 'none'; // Hide the video element
+                            } else {
+                                requestAnimationFrame(scanQRCode); // Keep scanning
+                            }
+                        } catch (error) {
+                            console.error('QR scanning error:', error);
+                        }
+                    };
+                    scanQRCode();
+                } catch (error) {
+                    console.error('Error initializing QR code scanning:', error);
+                }
+            } else {
+                console.error('Barcode Detection API is not supported by this browser.');
+                document.getElementById('qrResult').textContent = 'QR Code scanning is not supported by this browser.';
+            }
+        });
 
     </script>
 </body>
