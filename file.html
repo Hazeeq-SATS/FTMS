@@ -47,6 +47,23 @@
         let globalCharacteristic;
         let stream = null; // To hold the stream globally
 
+        document.addEventListener('DOMContentLoaded', async () => {
+      try {
+          const devices = await navigator.bluetooth.getDevices();
+          const lastDeviceId = localStorage.getItem('lastDeviceId');
+          if (lastDeviceId) {
+              const device = devices.find(d => d.id === lastDeviceId);
+              if (device) {
+                  console.log(`Found previously connected device: ${device.name}. Attempting to reconnect...`);
+                  await connectToDevice(device);
+              } else {
+                  console.log('No previously connected device found or permission not granted.');
+              }
+          }
+      } catch (error) {
+          console.error(`Error during automatic reconnection: ${error}`);
+      }
+  });
   // Function to connect to a device, now separated for reuse
   async function connectToDevice(device) {
     console.log('Device selected:', device.name);
