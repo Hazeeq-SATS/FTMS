@@ -69,15 +69,28 @@
         }
     }
 
-    // Disconnection event handler
-    function onDisconnected(event) {
-        const device = event.target;
-        console.log(`Device ${device.name} disconnected. Attempting to reconnect...`);
-        // Optionally, implement reconnection logic here
-        // For simplicity, just inform the user and suggest manual reconnection
-        alert(`Device ${device.name} disconnected. Please reconnect.`);
-        document.getElementById('deviceInfo').innerText = `Device ${device.name} disconnected. Please use the "Connect to Bluetooth Device" button to reconnect.`;
+    // Disconnection event handler that attempts reconnection
+function onDisconnected(event) {
+    const device = event.target;
+    console.log(`Device ${device.name} disconnected.`);
+    // Alert moved to the reconnectToDevice function to control flow after user acknowledgment
+    reconnectToDevice(device);
+}
+
+// Function to attempt reconnection
+async function reconnectToDevice(device) {
+    if (window.confirm(`Device ${device.name} disconnected. Attempt reconnect?`)) {
+        try {
+            await connectToDevice(device);
+            console.log(`Reconnected to ${device.name}`);
+            document.getElementById('deviceInfo').innerText = `Reconnected to device: ${device.name}`;
+        } catch (error) {
+            console.error(`Reconnection failed: ${error}`);
+            document.getElementById('deviceInfo').innerText = `Reconnection failed. Please try again.`;
+        }
     }
+}
+
 
         async function startVideoStream() {
             try {
