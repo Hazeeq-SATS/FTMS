@@ -47,35 +47,44 @@
         let globalCharacteristic;
         let stream = null; // To hold the stream globally
 
-      // Modified connectToDevice function with disconnection handling
-    async function connectToDevice(device) {
-        console.log('Device selected:', device.name);
-        document.getElementById('deviceInfo').innerText = `Connecting to device: ${device.name}`;
-        try {
-            const server = await device.gatt.connect();
-
-            // Add an event listener for the 'gattserverdisconnected' event
-            device.addEventListener('gattserverdisconnected', onDisconnected);
-
-            const service = await server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
-            const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
-            globalCharacteristic = characteristic;
-            console.log('Ready to receive temperature notifications');
-            startVideoStream();
-            document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
-        } catch (error) {
-            console.error('Connection failed:', error);
-            document.getElementById('deviceInfo').innerText = 'Connection failed. Please try again.';
-        }
+  // Function to connect to a device, now separated for reuse
+  async function connectToDevice(device) {
+    console.log('Device selected:', device.name);
+    document.getElementById('deviceInfo').innerText = `Connecting to device: ${device.name}`;
+    try {
+      const server = await device.gatt.connect();
+      device.addEventListener('gattserverdisconnected', onDisconnected);
+      const service = await server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
+      const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
+      globalCharacteristic = characteristic;
+      console.log('Ready to receive temperature notifications');
+      startVideoStream();
+      document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
+    } catch (error) {
+      console.error('Connection failed:', error);
+      document.getElementById('deviceInfo').innerText = 'Connection failed. Please try again.';
     }
+  }
 
-    // Disconnection event handler that attempts reconnection
-function onDisconnected(event) {
+  // Automatically try to reconnect to known devices on app launch
+  window.addEventListener('load', async () => {
+    const devices = await navigator.bluetooth.getDevices();
+    const lastDeviceId = localStorage.getItem('lastDeviceId');
+    const device = devices.find(d => d.id === lastDeviceId);
+    if (device) {
+      console.log('Attempting to reconnect to device:', device.name);
+      await connectToDevice(device);
+    } else {
+      console.log('No previously connected device found or permission not granted.');
+    }
+  });
+
+  function onDisconnected(event) {
     const device = event.target;
     console.log(`Device ${device.name} disconnected.`);
-    // Alert moved to the reconnectToDevice function to control flow after user acknowledgment
+    alert(`Device ${device.name} disconnected. Attempting to reconnect...`);
     reconnectToDevice(device);
-}
+  }
 
 // Function to attempt reconnection
 async function reconnectToDevice(device) {
