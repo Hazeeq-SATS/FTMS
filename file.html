@@ -43,43 +43,60 @@
         <div id="qrResult">QR code result will appear here</div>
     </div>
 
-    <script>
+   <script>
         let globalCharacteristic;
         let stream = null; // To hold the stream globally
 
-        document.getElementById('connectButton').addEventListener('click', function() {
-            navigator.bluetooth.requestDevice({
-                filters: [{ name: '21057150 RayTemp Blue' }],
-                optionalServices: ['45544942-4c55-4554-4845-524db87ad700']
-            })
-            .then(device => {
-                console.log('Device selected:', device.name);
-                document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
-                return device.gatt.connect();
-            })
-            .then(server => {
-                return server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
-            })
-            .then(service => {
-                return service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
-            })
-            .then(characteristic => {
-                globalCharacteristic = characteristic; // Save for later use
+        // Function to connect to a device
+        async function connectToDevice(device) {
+            console.log('Device selected:', device.name);
+            document.getElementById('deviceInfo').innerText = `Connecting to device: ${device.name}`;
+            try {
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('45544942-4c55-4554-4845-524db87ad700');
+                const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
+                globalCharacteristic = characteristic;
                 console.log('Ready to receive temperature notifications');
-                // Start the video stream and show the video element when Bluetooth is connected
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                    .then(mediaStream => {
-                        stream = mediaStream;
-                        const video = document.getElementById('cameraPreview');
-                        video.srcObject = stream;
-                        video.style.display = 'block';
-                    })
-                    .catch(error => console.error('Error accessing the camera', error));
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('deviceInfo').innerText = `Connection error: ${error}`;
-            });
+                startVideoStream();
+                document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
+            } catch (error) {
+                console.error('Connection failed:', error);
+                document.getElementById('deviceInfo').innerText = 'Connection failed. Please try again.';
+            }
+        }
+
+        async function startVideoStream() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = stream;
+                video.style.display = 'block';
+            } catch (error) {
+                console.error('Error accessing the camera', error);
+            }
+        }
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: '21057150 RayTemp Blue' }],
+                    optionalServices: ['45544942-4c55-4554-4845-524db87ad700']
+                });
+                localStorage.setItem('lastDeviceId', device.id); // Save for reconnection
+                await connectToDevice(device);
+            } catch (error) {
+                console.error('Error selecting device:', error);
+            }
+        });
+
+        // Attempt to automatically reconnect to a previously connected device when the page loads
+        window.addEventListener('load', async () => {
+            const devices = await navigator.bluetooth.getDevices();
+            const lastDeviceId = localStorage.getItem('lastDeviceId');
+            const device = devices.find(d => d.id === lastDeviceId);
+            if (device) {
+                await connectToDevice(device);
+            }
         });
 
         document.getElementById('captureButton').addEventListener('click', function() {
