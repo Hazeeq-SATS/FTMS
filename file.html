@@ -68,6 +68,10 @@
 <!-- Place this within the <body> tag, right after the table or as fits your layout -->
 <div id="syncContainer">
     <button id="syncButton">Sync Data with API</button>
+<div id="clearDataContainer">
+    <button id="clearDataButton">Clear Local Data</button>
+</div>
+
 </div>
 
    
@@ -443,6 +447,63 @@ function clearAllRecords() {
         console.error('Error clearing records from IndexedDB:', error);
     };
 }
+
+    // Existing function definitions (e.g., addRecord, addRecordToTable, etc.)
+
+    // Function to fetch and display records from IndexedDB
+    function displayRecordsFromIndexedDB() {
+        const transaction = db.transaction(['records'], 'readonly');
+        const store = transaction.objectStore('records');
+        const request = store.getAll(); // Fetch all records from the store
+
+        request.onsuccess = function(event) {
+            const records = event.target.result;
+            records.forEach(record => {
+                addRecordToTable(record); // Call your function to add each record to the table
+            });
+        };
+
+        request.onerror = function(event) {
+            console.error('Error fetching records from IndexedDB:', event.target.error);
+        };
+    }
+
+    // Event listener for DOMContentLoaded to call the display function
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure the IndexedDB is opened before trying to display records
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            displayRecordsFromIndexedDB(); // Now call the function to display records
+        };
+    }, false);
+document.getElementById('clearDataButton').addEventListener('click', function() {
+    clearIndexedDB();
+});
+
+function clearIndexedDB() {
+    // Open a transaction to the database
+    const transaction = db.transaction(['records'], 'readwrite');
+
+    // Access your object store
+    const store = transaction.objectStore('records');
+
+    // Clear all the data in the object store
+    const clearRequest = store.clear();
+
+    clearRequest.onsuccess = function() {
+        console.log('IndexedDB cleared successfully');
+        // Optionally, update the UI here to reflect that the database has been cleared
+        const tableBody = document.getElementById('temperatureRecords').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; // Clear the table on the UI as well
+    };
+
+    clearRequest.onerror = function(e) {
+        console.error('Error clearing IndexedDB:', e.target.error);
+    };
+}
+
+
+
 
     </script>
 </body>
