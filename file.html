@@ -2,17 +2,22 @@
 <html>
 <head>
     <title>Bluetooth Device Connection Example with QR Code Scanning</title>
-    <style>
+     <style>
         /* Styles for video and captured photo elements */
-        #cameraPreview, #qrVideo {
+        #cameraPreview, #qrVideo, #capturedPhoto {
             display: none;
             width: 320px;
             height: 240px;
         }
-        #capturedPhoto {
-            display: none;
-            width: 320px;
-            height: 240px;
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+        }
+        th {
+            text-align: left;
         }
     </style>
 </head>
@@ -37,15 +42,82 @@
         <img id="capturedPhoto" alt="Captured photo">
     </div>
 
-    <!-- QR Code Scanning Section -->
     <div id="qrContainer">
-        <button id="qrScanButton">Scan QR Code</button> <!-- QR Scan Button -->
+        <button id="qrScanButton">Scan QR Code</button>
         <div id="qrResult">QR code result will appear here</div>
     </div>
 
-   <script>
+    <!-- Status Indicator -->
+    <div id="statusIndicator">Status: Checking...</div>
+
+    <!-- Temperature Records Table -->
+    <table id="temperatureRecords">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Temperature (°C)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Records will be populated here -->
+        </tbody>
+    </table>
+
+   
+    <script>
+        let db;
         let globalCharacteristic;
-        let stream = null; // To hold the stream globally
+        let stream = null;
+
+        // IndexedDB setup
+        const request = indexedDB.open('TemperatureData', 1);
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains('records')) {
+                db.createObjectStore('records', { autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+        };
+
+        request.onerror = function(event) {
+            console.error('Database error:', event.target.error);
+        };
+
+        // Add record to IndexedDB
+        function addRecord(record) {
+            const transaction = db.transaction(['records'], 'readwrite');
+            const store = transaction.objectStore('records');
+            store.add(record);
+        }
+
+        // Add record to the table
+        function addRecordToTable(record) {
+            const table = document.getElementById('temperatureRecords').getElementsByTagName('tbody')[0];
+            const row = table.insertRow();
+            const timestampCell = row.insertCell(0);
+            const temperatureCell = row.insertCell(1);
+
+            timestampCell.textContent = record.timestamp;
+            temperatureCell.textContent = record.temperature;
+        }
+
+        // Capture temperature and photo
+        document.getElementById('captureButton').addEventListener('click', function() {
+            if (globalCharacteristic) {
+                globalCharacteristic.readValue().then(value => {
+                    const temperature = value.getFloat32(0, true);
+                    document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
+                    capturePhoto();
+                    const record = { timestamp: new Date().toISOString(), temperature: temperature };
+                    addRecord(record);
+                    addRecordToTable(record);
+                });
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', async () => {
       try {
@@ -264,7 +336,20 @@ async function reconnectToDevice(device) {
                 document.getElementById('qrResult').textContent = 'QR Code scanning is not supported by this browser.';
             }
         });
+// Monitor online/offline status
+        function updateOnlineStatus() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            if (navigator.onLine) {
+                statusIndicator.textContent = 'Status: Online';
+            } else {
+                statusIndicator.textContent = 'Status: Offline';
+            }
+        }
 
+        window.addEventListener('online',  updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        updateOnlineStatus(); // Initial check
     </script>
 </body>
 </html>
