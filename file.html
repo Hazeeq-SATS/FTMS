@@ -65,6 +65,10 @@
             <!-- Records will be populated here -->
         </tbody>
     </table>
+<!-- Place this within the <body> tag, right after the table or as fits your layout -->
+<div id="syncContainer">
+    <button id="syncButton">Sync Data with API</button>
+</div>
 
    
     <script>
@@ -377,6 +381,69 @@ async function reconnectToDevice(device) {
         window.addEventListener('offline', updateOnlineStatus);
 
         updateOnlineStatus(); // Initial check
+
+
+
+document.getElementById('syncButton').addEventListener('click', function() {
+    syncDataWithAPI();
+});
+
+function syncDataWithAPI() {
+    const transaction = db.transaction(['records'], 'readonly');
+    const store = transaction.objectStore('records');
+    const request = store.getAll();
+
+    request.onsuccess = async function(event) {
+        const records = event.target.result;
+
+        if (records.length > 0) {
+            try {
+                const response = await fetch('https://prod-48.southeastasia.logic.azure.com/workflows/c65d69778be645c097bfefd8db2a0232/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=7ZWVMahq1Eo10wYtAbHbF0nm1JpNAgiYUR_K8X2TL0U', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(records),
+}).then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+
+                if (response.ok) {
+                    console.log('Data synced with API successfully.');
+                    // Optionally, clear records from IndexedDB after successful sync
+                    clearAllRecords();
+                } else {
+                    console.error('Failed to sync data with API. Status:', response.status);
+                }
+            } catch (error) {
+                console.error('Error syncing data with API:', error);
+            }
+        } else {
+            console.log('No records to sync.');
+        }
+    };
+
+    request.onerror = function(event) {
+        console.error('Failed to retrieve records:', event.target.error);
+    };
+}
+
+// Clears all records in the IndexedDB after successful sync
+function clearAllRecords() {
+    const transaction = db.transaction(['records'], 'readwrite');
+    const store = transaction.objectStore('records');
+    const clearRequest = store.clear();
+
+    clearRequest.onsuccess = function() {
+        console.log('All records cleared from IndexedDB.');
+    };
+
+    clearRequest.onerror = function(error) {
+        console.error('Error clearing records from IndexedDB:', error);
+    };
+}
+
     </script>
 </body>
 </html>
