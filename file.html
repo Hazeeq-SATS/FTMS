@@ -49,6 +49,9 @@
 
     <!-- Status Indicator -->
     <div id="statusIndicator">Status: Checking...</div>
+<div id="temperatureOnlyContainer">
+    <button id="measureTemperatureButton">Measure Temperature Only</button>
+</div>
 
     <!-- Temperature Records Table -->
     <table id="temperatureRecords">
@@ -104,6 +107,30 @@
             timestampCell.textContent = record.timestamp;
             temperatureCell.textContent = record.temperature;
         }
+document.getElementById('measureTemperatureButton').addEventListener('click', function() {
+    if (globalCharacteristic) {
+        globalCharacteristic.readValue().then(value => {
+            const temperature = value.getFloat32(0, true); // Assuming this is how you get the temperature
+            document.getElementById('temperatureValue').innerText = `Temperature: ${temperature}°C`;
+
+            // Record the temperature measurement with a timestamp
+            const record = {
+                timestamp: new Date().toISOString(),
+                temperature: temperature
+            };
+
+            // Add the record to IndexedDB
+            addRecord(record);
+
+            // Add the record to the table
+            addRecordToTable(record);
+        }).catch(error => {
+            console.error('Error reading temperature:', error);
+        });
+    } else {
+        console.error('Global characteristic not defined - device may not be connected.');
+    }
+});
 
         // Capture temperature and photo
         document.getElementById('captureButton').addEventListener('click', function() {
