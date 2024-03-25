@@ -85,15 +85,19 @@
     </style>
 </head>
 <body>
+  <!-- Status Indicator -->
+    <div id="statusIndicator">Network Status: Checking...</div>
     <div id="bluetoothContainer">
         <button id="connectButton">Connect to Bluetooth Device</button>
         <div id="deviceInfo"></div>
     </div>
+<div id="captureContainer">
+    <button id="startCameraButton">Start Camera</button> <!-- New Button for Starting Camera -->
+    <button id="captureButton">Capture Temperature and Photo</button>
+    <div id="temperatureValue"></div>
+</div>
 
-    <div id="captureContainer">
-        <button id="captureButton">Capture Temperature and Photo</button>
-        <div id="temperatureValue"></div>
-    </div>
+  
 
     <div id="nfcContainer">
         <button id="scanButton">Scan NFC</button>
@@ -110,8 +114,7 @@
         <div id="qrResult">QR code result will appear here</div>
     </div>
 
-    <!-- Status Indicator -->
-    <div id="statusIndicator">Status: Checking...</div>
+  
 <div id="temperatureOnlyContainer">
     <button id="measureTemperatureButton">Measure Temperature Only</button>
 </div>
@@ -235,7 +238,7 @@ document.getElementById('measureTemperatureButton').addEventListener('click', fu
       }
   });
   // Function to connect to a device, now separated for reuse
-  async function connectToDevice(device) {
+async function connectToDevice(device) {
     console.log('Device selected:', device.name);
     document.getElementById('deviceInfo').innerText = `Connecting to device: ${device.name}`;
     try {
@@ -245,13 +248,23 @@ document.getElementById('measureTemperatureButton').addEventListener('click', fu
       const characteristic = await service.getCharacteristic('45544942-4c55-4554-4845-524db87ad701');
       globalCharacteristic = characteristic;
       console.log('Ready to receive temperature notifications');
-      startVideoStream();
+      // startVideoStream(); // This line is removed
       document.getElementById('deviceInfo').innerText = `Connected to device: ${device.name}`;
     } catch (error) {
       console.error('Connection failed:', error);
       document.getElementById('deviceInfo').innerText = 'Connection failed. Please try again.';
     }
-  }
+}
+
+// Add event listener for the "Start Camera" button
+document.getElementById('startCameraButton').addEventListener('click', function() {
+    startVideoStream().then(() => {
+        console.log('Camera started successfully.');
+    }).catch(error => {
+        console.error('Error starting the camera:', error);
+    });
+});
+
 
   // Automatically try to reconnect to known devices on app launch
   window.addEventListener('load', async () => {
@@ -288,16 +301,7 @@ async function reconnectToDevice(device) {
 }
 
 
-        async function startVideoStream() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                const video = document.getElementById('cameraPreview');
-                video.srcObject = stream;
-                video.style.display = 'block';
-            } catch (error) {
-                console.error('Error accessing the camera', error);
-            }
-        }
+     
 
         document.getElementById('connectButton').addEventListener('click', async () => {
             try {
@@ -438,9 +442,9 @@ async function reconnectToDevice(device) {
         function updateOnlineStatus() {
             const statusIndicator = document.getElementById('statusIndicator');
             if (navigator.onLine) {
-                statusIndicator.textContent = 'Status: Online';
+                statusIndicator.textContent = 'Network Status: Online';
             } else {
-                statusIndicator.textContent = 'Status: Offline';
+                statusIndicator.textContent = 'Network Status: Offline';
             }
         }
 
