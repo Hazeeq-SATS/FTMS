@@ -148,6 +148,7 @@
         let db;
         let globalCharacteristic;
         let stream = null;
+        let isCameraOn = false; // Tracks the camera's state
 
         // IndexedDB setup
         const request = indexedDB.open('TemperatureData', 1);
@@ -208,6 +209,38 @@ document.getElementById('measureTemperatureButton').addEventListener('click', fu
         console.error('Global characteristic not defined - device may not be connected.');
     }
 });
+        document.getElementById('startCameraButton').addEventListener('click', function() {
+    if (!isCameraOn) {
+        // Camera is off, attempt to start it
+        startVideoStream().then(() => {
+            console.log('Camera started successfully.');
+            isCameraOn = true;
+            document.getElementById('startCameraButton').innerText = 'Stop Camera'; // Change button text to "Stop Camera"
+        }).catch(error => {
+            console.error('Error starting the camera:', error);
+        });
+    } else {
+        // Camera is on, stop it
+        stopVideoStream().then(() => {
+            console.log('Camera stopped successfully.');
+            isCameraOn = false;
+            document.getElementById('startCameraButton').innerText = 'Start Camera'; // Change button text back to "Start Camera"
+        }).catch(error => {
+            console.error('Error stopping the camera:', error);
+        });
+    }
+});
+
+        // Defines the stopVideoStream function, which stops the camera stream and optionally hides the video element
+function stopVideoStream() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        // Optionally, hide the video element or reset its state here
+        document.getElementById('cameraPreview').style.display = 'none';
+        stream = null;
+        isCameraOn = false;
+    }
+}
 
         // Capture temperature and photo
         document.getElementById('captureButton').addEventListener('click', function() {
