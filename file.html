@@ -355,6 +355,27 @@ async function reconnectToDevice(device) {
                 tracks.forEach(track => track.stop());
             }
         }
+async function startVideoStream() {
+    try {
+        // Request access to the camera
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+
+        // Get the video element
+        const video = document.getElementById('cameraPreview');
+        
+        // Set the source of the video element to the stream
+        video.srcObject = stream;
+
+        // Show the video element
+        video.style.display = 'block';
+        
+        // Play the video stream
+        video.play();
+    } catch (error) {
+        console.error('Error accessing the camera', error);
+        alert('Error accessing the camera: ' + error.message);
+    }
+}
 
 
         // NFC Scan Button Logic
