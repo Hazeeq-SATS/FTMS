@@ -209,38 +209,40 @@ document.getElementById('measureTemperatureButton').addEventListener('click', fu
         console.error('Global characteristic not defined - device may not be connected.');
     }
 });
-        document.getElementById('startCameraButton').addEventListener('click', function() {
+        
+document.getElementById('startCameraButton').addEventListener('click', function() {
     if (!isCameraOn) {
-        // Camera is off, attempt to start it
+        // Attempt to start the camera
         startVideoStream().then(() => {
             console.log('Camera started successfully.');
             isCameraOn = true;
-            document.getElementById('startCameraButton').innerText = 'Stop Camera'; // Change button text to "Stop Camera"
+            document.getElementById('startCameraButton').innerText = 'Stop Camera';
         }).catch(error => {
             console.error('Error starting the camera:', error);
         });
     } else {
-        // Camera is on, stop it
-        stopVideoStream().then(() => {
-            console.log('Camera stopped successfully.');
-            isCameraOn = false;
-            document.getElementById('startCameraButton').innerText = 'Start Camera'; // Change button text back to "Start Camera"
-        }).catch(error => {
-            console.error('Error stopping the camera:', error);
-        });
+        // Stop the camera
+        stopVideoStream();
+        isCameraOn = false;
+        document.getElementById('startCameraButton').innerText = 'Start Camera';
     }
 });
 
-        // Defines the stopVideoStream function, which stops the camera stream and optionally hides the video element
-function stopVideoStream() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        // Optionally, hide the video element or reset its state here
-        document.getElementById('cameraPreview').style.display = 'none';
-        stream = null;
-        isCameraOn = false;
+async function startVideoStream() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        const video = document.getElementById('cameraPreview');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        video.play();
+        isCameraOn = true; // Make sure to set this here as well
+        console.log('Camera stream started.');
+    } catch (error) {
+        console.error('Error accessing the camera', error);
+        alert('Error accessing the camera: ' + error.message);
     }
 }
+
 
         // Capture temperature and photo
         document.getElementById('captureButton').addEventListener('click', function() {
