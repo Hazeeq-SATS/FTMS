@@ -1,5 +1,68 @@
 <!DOCTYPE html>
 <html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth Device Connection Example with QR Code Scanning</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #connectButton { background-color: #007bff; color: white; }
+        #captureButton { background-color: #28a745; color: white; }
+        #scanButton { background-color: #ffc107; color: black; }
+        #qrScanButton { background-color: #17a2b8; color: white; }
+        #measureTemperatureButton, #syncButton, #clearDataButton { background-color: #6c757d; color: white; }
+        #cameraPreview, #qrVideo, #capturedPhoto {
+            display: none;
+            width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        #deviceInfo, #temperatureValue, #nfcContent, #qrResult, #statusIndicator {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+    </style>
 <head>
     <title>Bluetooth Device Connection Example with QR Code Scanning</title>
      <style>
