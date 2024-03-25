@@ -356,12 +356,12 @@ async function reconnectToDevice(device) {
     img.src = canvas.toDataURL('image/png');
     img.style.display = 'block';
 
-    // Optionally, hide the video element and stop the video stream if not needed anymore
-    // video.style.display = 'none';
-    // if (stream) {
-    //     let tracks = stream.getTracks();
-    //     tracks.forEach(track => track.stop());
-    // }
+    //Optionally, hide the video element and stop the video stream if not needed anymore
+    video.style.display = 'none';
+    if (stream) {
+        let tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+    }
 }
 
 async function startVideoStream() {
