@@ -339,25 +339,31 @@ async function reconnectToDevice(device) {
             }
         });
 
-        function capturePhoto() {
-            const video = document.getElementById('cameraPreview');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+       function capturePhoto() {
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Clear the existing image before capturing a new one
+    const img = document.getElementById('capturedPhoto');
+    img.style.display = 'none'; // Hide the previous image
+    img.src = ''; // Clear the previous image source
 
-            // Convert canvas to an image and display it
-            const img = document.getElementById('capturedPhoto');
-            img.src = canvas.toDataURL('image/png');
-            img.style.display = 'block';
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Hide the video element and stop the video stream
-            video.style.display = 'none';
-            if (stream) {
-                let tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-            }
-        }
+    // Convert canvas to an image and display it
+    img.src = canvas.toDataURL('image/png');
+    img.style.display = 'block';
+
+    // Optionally, hide the video element and stop the video stream if not needed anymore
+    // video.style.display = 'none';
+    // if (stream) {
+    //     let tracks = stream.getTracks();
+    //     tracks.forEach(track => track.stop());
+    // }
+}
+
 async function startVideoStream() {
     try {
         // Request access to the camera
